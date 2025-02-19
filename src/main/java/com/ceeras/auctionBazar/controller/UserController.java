@@ -1,6 +1,6 @@
-package in.ceeras.RegistrationAPI.controller;
+package com.ceeras.auctionBazar.controller;
 
-import in.ceeras.RegistrationAPI.service.UserService;
+import com.ceeras.auctionBazar.service.UserService;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
