@@ -37,4 +37,31 @@ public class UserService {
         return "User registered successfully! ID: " + savedUser.getId();
 
     }
+    public User Update(User user,User user2) {
+        Optional<User> old=userRepository.findByEmail(user.getEmail();
+        if(old.isPresent()) {
+            String email= user2.getEmail();
+            Optional<User> temp=userRepository.findByEmail(user.getEmail();
+            if(temp.isPresent()){
+                return "Email address already in use";
+            }
+            else{
+                old.setEmail(email);
+            }
+            if(user2.getPassword()<6){
+                return "Password must be at least 6 characters";
+            }
+            else{
+                old.setPassword(user2.getPassword());
+            }
+            if(user2.getRole()!=old.getRole()){
+                old.setRole(user2.getRole());
+            }
+            if(user2.getName()!=null){
+                old.setName(user2.getName());
+            }
+        }
+       
+        return  userRepository.save(old);
+    }
 }
