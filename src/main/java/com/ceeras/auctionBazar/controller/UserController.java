@@ -19,4 +19,9 @@ public class UserController {
 
         return userService.registerUser(email, password, name);
     }
+    @PutMapping("/update")
+    public User update(@RequestHeader ("Authorization") String jwt,@RequestBody Map<String, String> user)  {
+        User main=userRepository.findByEmail(user.get("email");
+        return userService.Update(main,user);
+    }
 }
