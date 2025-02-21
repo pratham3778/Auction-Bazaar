@@ -1,15 +1,21 @@
 package com.ceeras.auctionBazar.controller;
 
+import com.ceeras.auctionBazar.entity.User;
 import com.ceeras.auctionBazar.service.UserService;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/users")
 public class UserController {
 
-    private UserService userService;
+    private final UserService userService;
+
+    public UserController(UserService userService) {
+        this.userService = userService;
+    }
 
     @PostMapping("/register")
     public String registerUser(@RequestBody Map<String, String> userData) {
@@ -19,9 +25,21 @@ public class UserController {
 
         return userService.registerUser(email, password, name);
     }
+
     @PutMapping("/update")
-    public User update(@RequestHeader ("Authorization") String jwt,@RequestBody Map<String, String> user)  {
-        User main=userRepository.findByEmail(user.get("email");
-        return userService.Update(main,user);
+    public User update(@RequestHeader("Authorization") String jwt, @RequestBody Map<String, String> userData) {
+        String email = userData.get("email");
+
+        Optional<User> mainUser = userService.getUserByEmail(email);
+        if (mainUser.isEmpty()) {
+            throw new RuntimeException("User not found");
+        }
+
+        User updatedUser = new User();
+        updatedUser.setEmail(userData.get("email"));
+        updatedUser.setPassword(userData.get("password"));
+        updatedUser.setName(userData.get("name"));
+
+        return userService.update(mainUser.get(), updatedUser);
     }
 }
