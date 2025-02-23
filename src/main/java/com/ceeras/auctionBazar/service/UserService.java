@@ -34,7 +34,7 @@ public class UserService {
         }
 
         String encodedPassword = bCryptPasswordEncoder.encode(password);
-        User newUser = new User(null, User.Role.USER, email, encodedPassword, name);
+        User newUser = new User(null, email, encodedPassword, name,  User.Role.USER);
         User savedUser = userRepository.save(newUser);
 
         return "User registered successfully! ID: " + savedUser.getId();
