@@ -5,6 +5,7 @@ import com.ceeras.auctionBazar.repository.UserRepository;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.regex.Pattern;
 
@@ -34,7 +35,7 @@ public class UserService {
         }
 
         String encodedPassword = bCryptPasswordEncoder.encode(password);
-        User newUser = new User(null, email, encodedPassword, name,  User.Role.USER);
+        User newUser = new User(null, email, encodedPassword, name, User.Role.USER, LocalDateTime.now(), null, null);
         User savedUser = userRepository.save(newUser);
 
         return "User registered successfully! ID: " + savedUser.getId();
