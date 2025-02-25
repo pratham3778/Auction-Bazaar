@@ -19,7 +19,7 @@ public class User {
     private String email;
 
     @Column(nullable = false)
-    private String password;
+    private String password; //we are using Hashed password
 
     @Column(nullable = false)
     private String name;
