@@ -2,43 +2,47 @@ package com.ceeras.auctionBazar.service;
 
 import com.ceeras.auctionBazar.entity.User;
 import com.ceeras.auctionBazar.repository.UserRepository;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
+import com.ceeras.auctionBazar.security.JwtUtil;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
-import java.time.LocalDateTime;
 import java.util.Optional;
-import java.util.regex.Pattern;
 
 @Service
 public class UserService {
+
     private final UserRepository userRepository;
-    private final BCryptPasswordEncoder bCryptPasswordEncoder = new BCryptPasswordEncoder();
+    private final PasswordEncoder passwordEncoder;
+    private final JwtUtil jwtUtil;
 
-    private static final Pattern EMAIL_PATTERN = Pattern.compile("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$");
-
-    public UserService(UserRepository userRepository) {
+    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder, JwtUtil jwtUtil) {
         this.userRepository = userRepository;
+        this.passwordEncoder = passwordEncoder;
+        this.jwtUtil = jwtUtil;
     }
 
-    public String registerUser(String email, String password, String name) {
-        if (!EMAIL_PATTERN.matcher(email).matches()) {
-            return "Invalid email address";
-        }
-
+    public String registerUser(String name, String email, String password) {
         Optional<User> existingUser = userRepository.findByEmail(email);
         if (existingUser.isPresent()) {
-            return "Email address already in use";
+            return "Email is already in use!";
         }
 
-        if (password.length() < 6) {
-            return "Password must be at least 6 characters";
+        User user = new User();
+        user.setName(name);
+        user.setEmail(email);
+        user.setPassword(passwordEncoder.encode(password));
+
+        userRepository.save(user);
+        return "User registered successfully!";
+    }
+
+    public String loginUser(String email, String password) {
+        Optional<User> userOptional = userRepository.findByEmail(email);
+        if (userOptional.isEmpty() || !passwordEncoder.matches(password, userOptional.get().getPassword())) {
+            return "Invalid email or password!";
         }
-
-        String encodedPassword = bCryptPasswordEncoder.encode(password);
-        User newUser = new User(null, email, encodedPassword, name, User.Role.USER, LocalDateTime.now(), null, null);
-        User savedUser = userRepository.save(newUser);
-
-        return "User registered successfully! ID: " + savedUser.getId();
+        return  email; //jwtUtil.generateToken(email);
+        //return jwtUtil.generateToken(email);
     }
 
     public User update(User user, User user2) {
@@ -58,7 +62,7 @@ public class UserService {
             if (newPassword != null && newPassword.length() < 6) {
                 throw new RuntimeException("Password must be at least 6 characters");
             } else if (newPassword != null) {
-                oldUser.setPassword(bCryptPasswordEncoder.encode(newPassword));
+                oldUser.setPassword(passwordEncoder.encode(newPassword)); // Fixed variable name
             }
 
             if (user2.getRole() != null && user2.getRole() != oldUser.getRole()) {
@@ -68,7 +72,12 @@ public class UserService {
             if (user2.getName() != null) {
                 oldUser.setName(user2.getName());
             }
-
+            if(user2.getAuctions()!=null){
+                oldUser.setAuctions(user2.getAuctions());
+            }
+            if(user2.getBids()!=null){
+                oldUser.setBids(user2.getBids());
+            }
             return userRepository.save(oldUser);
         } else {
             throw new RuntimeException("User not found");

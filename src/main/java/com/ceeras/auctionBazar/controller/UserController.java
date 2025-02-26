@@ -1,14 +1,18 @@
 package com.ceeras.auctionBazar.controller;
 
+import com.ceeras.auctionBazar.dto.UserRegisterDTO;
+import com.ceeras.auctionBazar.dto.UserLoginDTO;
 import com.ceeras.auctionBazar.entity.User;
 import com.ceeras.auctionBazar.service.UserService;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import jakarta.validation.Valid;
 
 import java.util.Map;
 import java.util.Optional;
 
 @RestController
-@RequestMapping("/api/users")
+@RequestMapping("/api/auth") // Matching friend's approach
 public class UserController {
 
     private final UserService userService;
@@ -17,29 +21,45 @@ public class UserController {
         this.userService = userService;
     }
 
-    @PostMapping("/register")
-    public String registerUser(@RequestBody Map<String, String> userData) {
-        String email = userData.get("email");
-        String password = userData.get("password");
-        String name = userData.get("name");
+//    public UserController(UserService userService) {
+//        this.userService = userService;
+//    }
 
-        return userService.registerUser(email, password, name);
+    // Registration API
+    @PostMapping("/register")
+    public ResponseEntity<Map<String, String>> registerUser(@Valid @RequestBody UserRegisterDTO userDTO) {
+        String response = userService.registerUser(userDTO.getName(), userDTO.getEmail(), userDTO.getPassword());
+        return ResponseEntity.ok(Map.of("message", response));
     }
 
-    @PutMapping("/update")
-    public User update(@RequestHeader("Authorization") String jwt, @RequestBody Map<String, String> userData) {
-        String email = userData.get("email");
+    // Login API
+    @PostMapping("/login")
+    public ResponseEntity<Map<String, String>> loginUser(@RequestBody UserLoginDTO loginRequest) {
+        String email = loginRequest.getEmail();
+        String password = loginRequest.getPassword();
 
-        Optional<User> mainUser = userService.getUserByEmail(email);
+        String token = userService.loginUser(email, password);
+        if ("Invalid email or password!".equals(token)) {
+            return ResponseEntity.badRequest().body(Map.of("error", token));
+        }
+        return ResponseEntity.ok(Map.of("token", token));
+    }
+
+    // Update API
+    @PutMapping("/update")
+    public ResponseEntity<Map<String, String>> updateUser(@RequestHeader("Authorization") String jwt,
+                                                          @Valid @RequestBody UserRegisterDTO userDTO) {
+        Optional<User> mainUser = userService.getUserByEmail(userDTO.getEmail());
         if (mainUser.isEmpty()) {
-            throw new RuntimeException("User not found");
+            return ResponseEntity.badRequest().body(Map.of("error", "User not found"));
         }
 
         User updatedUser = new User();
-        updatedUser.setEmail(userData.get("email"));
-        updatedUser.setPassword(userData.get("password"));
-        updatedUser.setName(userData.get("name"));
+        updatedUser.setEmail(userDTO.getEmail());
+        updatedUser.setPassword(userDTO.getPassword());
+        updatedUser.setName(userDTO.getName());
 
-        return userService.update(mainUser.get(), updatedUser);
+        userService.update(mainUser.get(), updatedUser);
+        return ResponseEntity.ok(Map.of("message", "User updated successfully"));
     }
 }
