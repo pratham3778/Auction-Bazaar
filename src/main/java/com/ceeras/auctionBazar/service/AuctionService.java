@@ -41,12 +41,23 @@ public class AuctionService {
     }
 
     public Auction updateAuction(Long auctionId, String title, String description, LocalDateTime startTime, LocalDateTime endTime, BigDecimal startingPrice) {
-        //TODO: Implement this method
-        return null;
+        Auction auction = auctionRepository.findById(auctionId)
+                .orElseThrow(() -> new RuntimeException("Auction not found"));
+
+        auction.setTitle(title);
+        auction.setDescription(description);
+        auction.setStartTime(startTime);
+        auction.setEndTime(endTime);
+        auction.setStartingPrice(startingPrice);
+
+
+        return auctionRepository.save(auction);
     }
 
     public void deleteAuction(Long auctionId) {
-        //TODO: Implement this method
-    }
+        Auction auction = auctionRepository.findById(auctionId)
+                .orElseThrow(() -> new RuntimeException("Auction not found"));
 
+        auctionRepository.delete(auction);
+    }
 }
