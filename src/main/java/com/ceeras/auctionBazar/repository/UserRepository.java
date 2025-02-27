@@ -1,6 +1,5 @@
 package com.ceeras.auctionBazar.repository;
 
-
 import com.ceeras.auctionBazar.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 
