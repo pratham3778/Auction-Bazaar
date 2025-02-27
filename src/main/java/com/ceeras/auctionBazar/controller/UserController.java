@@ -5,7 +5,6 @@ import com.ceeras.auctionBazar.entity.User;
 import com.ceeras.auctionBazar.repository.UserRepository;
 import com.ceeras.auctionBazar.service.UserService;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.*;
 import java.util.Map;
 import java.util.Optional;
@@ -17,7 +16,7 @@ public class UserController {
 
     private final UserService userService;
     private UserRepository userRepository;
-    private JwtUtil jwtService;
+    private  JwtUtil jwtService;
 
     public UserController(UserService userService, JwtUtil jwtService) {
         this.userService = userService;

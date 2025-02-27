@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -59,5 +60,15 @@ public class AuctionService {
                 .orElseThrow(() -> new RuntimeException("Auction not found"));
 
         auctionRepository.delete(auction);
+    }
+
+    public Auction getAuction(Long auctionId) {
+        return auctionRepository.findById(auctionId)
+                .orElseThrow(() -> new RuntimeException("Auction not found"));
+
+    }
+
+    public List<Auction> getAllAuctions() {
+        return auctionRepository.findAll();
     }
 }
