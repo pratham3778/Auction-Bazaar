@@ -1,7 +1,12 @@
 package com.ceeras.auctionBazar.controller;
 
 import com.ceeras.auctionBazar.entity.Auction;
+import com.ceeras.auctionBazar.entity.User;
 import com.ceeras.auctionBazar.service.AuctionService;
+import com.ceeras.auctionBazar.repository.UserRepository;
+import com.ceeras.auctionBazar.Security.JwtUtil;
+
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -10,15 +15,20 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/auctions")
 public class AuctionController {
 
-    private final AuctionService auctionService;
-
-    public AuctionController(AuctionService auctionService) {
-        this.auctionService = auctionService;
+    private final UserRepository userRepository;
+    private final JwtUtil jwtUtil;
+    private AuctionService auctionService;
+    
+    public AuctionController(AuctionService auctionService, UserRepository userRepository, JwtUtil jwtUtil) {
+            this.auctionService = auctionService;
+        this.userRepository = userRepository;
+        this.jwtUtil = jwtUtil;
     }
 
     @PostMapping("/create-auction")
@@ -46,14 +56,33 @@ public class AuctionController {
     }
 
     @PutMapping("/{auctionId}")
-    public Auction updateAuction(@PathVariable Long auctionId,
-                                 @RequestParam String title,
-                                 @RequestParam String description,
-                                 @RequestParam LocalDateTime startTime,
-                                 @RequestParam LocalDateTime endTime,
-                                 @RequestParam BigDecimal startingPrice) {
-        return null; // TODO: Implement
+    public ResponseEntity<?> updateAuction(@PathVariable Long auctionId, 
+                                        @RequestHeader("Authorization") String token,
+                                        @RequestBody Map<String, Object> requestBody) {
+        
+        String jwt = token.substring(7);
+        String userEmail = jwtUtil.getEmailFromToken(jwt);
+        Optional<User> user = userRepository.findByEmail(userEmail);
+        
+        if (user.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized: User not found");
+        }
+
+        Long userId = user.get().getId();
+        String title = requestBody.get("title").toString();
+        String description = requestBody.get("description").toString();
+        LocalDateTime startTime = LocalDateTime.parse(requestBody.get("startTime").toString());
+        LocalDateTime endTime = LocalDateTime.parse(requestBody.get("endTime").toString());
+        BigDecimal startingPrice = new BigDecimal(requestBody.get("startingPrice").toString());
+
+        try {
+            Auction updatedAuction = auctionService.updateAuction(auctionId, userId, title, description, startTime, endTime, startingPrice);
+            return ResponseEntity.ok(updatedAuction);
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
+        }
     }
+
 
 
 

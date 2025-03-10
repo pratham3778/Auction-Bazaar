@@ -41,19 +41,25 @@ public class AuctionService {
         return auctionRepository.save(auction);
     }
 
-    public Auction updateAuction(Long auctionId, String title, String description, LocalDateTime startTime, LocalDateTime endTime, BigDecimal startingPrice) {
+    public Auction updateAuction(Long auctionId, Long userId, String title, String description, 
+                             LocalDateTime startTime, LocalDateTime endTime, BigDecimal startingPrice) {
         Auction auction = auctionRepository.findById(auctionId)
                 .orElseThrow(() -> new RuntimeException("Auction not found"));
+
+        if (!auction.getCreator().getId().equals(userId)) {
+            throw new RuntimeException("Unauthorized: You are not the owner of this auction");
+        }
 
         auction.setTitle(title);
         auction.setDescription(description);
         auction.setStartTime(startTime);
         auction.setEndTime(endTime);
         auction.setStartingPrice(startingPrice);
-
+        auction.setUpdatedAt(LocalDateTime.now());
 
         return auctionRepository.save(auction);
     }
+
 
     public void deleteAuction(Long auctionId) {
         Auction auction = auctionRepository.findById(auctionId)
