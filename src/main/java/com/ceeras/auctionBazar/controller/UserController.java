@@ -65,4 +65,18 @@ public class UserController {
 
         return userService.update(mainUser.get(), updatedUser);
     }
+    @PostMapping("/request-password-reset")
+    public ResponseEntity<String> requestPasswordReset(@RequestBody Map<String, String> userData) {
+        String email = userData.get("email");
+        String result = userService.requestPasswordReset(email);
+        return ResponseEntity.ok(result);
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<String> resetPassword(@RequestBody Map<String, String> userData) {
+        String token = userData.get("token");
+        String newPassword = userData.get("newPassword");
+        String result = userService.resetPassword(token, newPassword);
+        return ResponseEntity.ok(result);
+    }
 }

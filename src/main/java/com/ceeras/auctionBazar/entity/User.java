@@ -24,6 +24,9 @@ public class User {
 
     @Column(nullable = false)
     private String password;
+    @Column(nullable = true)
+    private String resetToken;
+    private Long resetTokenCreationTime; 
 
     @Column(nullable = false)
     private String name;
@@ -47,7 +50,20 @@ public class User {
     protected void onCreate() {
         createdAt = LocalDateTime.now();
     }
+    public String getResetToken() {
+        return resetToken;
+    }
+    public Long getResetTokenCreationTime() {
+        return resetTokenCreationTime;
+    }
 
+    public void setResetTokenCreationTime(Long resetTokenCreationTime) {
+        this.resetTokenCreationTime = resetTokenCreationTime;
+    }
+
+    public void setResetToken(String resetToken) {
+        this.resetToken = resetToken;
+    }
     public enum Role {
         USER,
         ADMIN

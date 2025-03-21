@@ -1,5 +1,6 @@
 package com.ceeras.auctionBazar.service;
 
+import com.ceeras.auctionBazar.email_notification.sendmail;
 import com.ceeras.auctionBazar.entity.Auction;
 import com.ceeras.auctionBazar.entity.User;
 import com.ceeras.auctionBazar.repository.AuctionRepository;
@@ -16,10 +17,11 @@ public class AuctionService {
 
     private final AuctionRepository auctionRepository;
     private final UserRepository userRepository;
-
-    public AuctionService(AuctionRepository auctionRepository, UserRepository userRepository) {
+    private final sendmail send;
+    public AuctionService(AuctionRepository auctionRepository, UserRepository userRepository, sendmail send) {
         this.auctionRepository = auctionRepository;
         this.userRepository = userRepository;
+        this.send=send;
     }
 
     public Auction createAuction(Long userId, String title, String description, LocalDateTime startTime, LocalDateTime endTime, BigDecimal startingPrice) {
@@ -37,7 +39,7 @@ public class AuctionService {
         auction.setStartingPrice(startingPrice);
         auction.setCreatedAt(LocalDateTime.now());
         auction.setUpdatedAt(LocalDateTime.now());
-
+        send.sendEmail(creator.get().getEmail(), creator.get().getName(), "4");
         return auctionRepository.save(auction);
     }
 

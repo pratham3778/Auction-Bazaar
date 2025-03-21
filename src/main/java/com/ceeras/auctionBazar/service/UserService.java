@@ -1,21 +1,26 @@
 package com.ceeras.auctionBazar.service;
 
 import com.ceeras.auctionBazar.Security.JwtUtil;
+import com.ceeras.auctionBazar.email_notification.sendmail;
+import com.ceeras.auctionBazar.entity.EmailDetails;
 import com.ceeras.auctionBazar.entity.User;
 import com.ceeras.auctionBazar.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
-
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.regex.Pattern;
 
 @Service
 public class UserService {
+
+    
     private final UserRepository userRepository;
+    private final sendmail send;
     private final BCryptPasswordEncoder bCryptPasswordEncoder = new BCryptPasswordEncoder();
     private final JwtUtil jwtUtil;
     private static final Pattern EMAIL_PATTERN = Pattern.compile("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$");
@@ -23,9 +28,10 @@ public class UserService {
     private static final Pattern PASSWORD_PATTERN = Pattern.compile("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{6,}$");
 
     @Autowired
-    public UserService(UserRepository userRepository, JwtUtil jwtUtil) {
+    public UserService(UserRepository userRepository, JwtUtil jwtUtil, sendmail send) {
         this.userRepository = userRepository;
         this.jwtUtil = jwtUtil;
+        this.send=send;
     }
 
     public String registerUser(String email, String password, String name) {
@@ -36,8 +42,9 @@ public class UserService {
         if (!PASSWORD_PATTERN.matcher(password).matches())
             return "Password must be at least 6 characters and contain at least 1 uppercase letter, 1 lowercase letter, 1 digit, and 1 special character";
 
-        User savedUser = userRepository.save(new User(null, email, bCryptPasswordEncoder.encode(password), name, User.Role.USER, LocalDateTime.now(), null, null));
-        return "User registered successfully! ID: ";
+       User savedUser = userRepository.save(new User(null, email, bCryptPasswordEncoder.encode(password),null,null, name, User.Role.USER, LocalDateTime.now(), null, null));
+       send.sendEmail(email, name,"1");
+        return "User registered successfully! ID: "+savedUser.getId();
     }
 
     public User update(User user, User user2) {
@@ -88,5 +95,40 @@ public class UserService {
         String userName=user.getEmail();
         userRepository.delete(userOptional.get());
         return "User deleted successfully "+userName;
+    }
+      public String requestPasswordReset(String email) {
+        Optional<User> userOptional = userRepository.findByEmail(email);
+        if (userOptional.isEmpty()) {
+            return "User not found";
+        }
+
+        User user = userOptional.get();
+        String token = UUID.randomUUID().toString();
+        user.setResetToken(token);
+        long currentTime = System.currentTimeMillis();
+        user.setResetTokenCreationTime(currentTime);
+        userRepository.save(user);
+        String frontendResetLink = "http://your-frontend-url.com/reset-password?token=" + token;//frontend link to be modified with original
+        send.sendEmail(email, user.getName(), "3", frontendResetLink);
+        return "Password reset link sent to your email";
+    }
+
+    public String resetPassword(String token, String newPassword) {
+        Optional<User> userOptional = userRepository.findByResetToken(token);
+        if (userOptional.isEmpty()) {
+            return "Invalid token";
+        }
+        User user = userOptional.get();
+        long currentTime = System.currentTimeMillis();
+        long tokenCreationTime = user.getResetTokenCreationTime();
+        long expirationTime = 1 * 60 * 1000; // 15 minutes
+        if (currentTime - tokenCreationTime > expirationTime) {
+            return "Token has expired";
+        }
+        user.setPassword(newPassword);
+        user.setResetToken(null);
+        userRepository.save(user);
+
+        return "Password reset successfully";
     }
 }
