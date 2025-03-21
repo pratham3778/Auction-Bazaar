@@ -1,6 +1,7 @@
 
 package com.ceeras.auctionBazar.email_notification;
 
+import org.springframework.beans.factory.annotation.Value;
 //zimport org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
@@ -8,7 +9,8 @@ import org.springframework.web.client.RestTemplate;
 
 @Service
 public class sendmail {
-    private String apiKey="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";
+    @Value("${brevo.api.key}")
+    private String apiKey;
     String url = "https://api.brevo.com/v3/smtp/email";
     public void sendEmail(String toEmail,String name ,String templateId) {
          //String templateId = "1";
